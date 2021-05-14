@@ -20,6 +20,8 @@ in the root directory. That one can be called using PlayAdvertidement(song numbe
 The thing is, using the function means it can be called WHILE a sound is already being played, you cant call it if no sound is playing.
 
 A basic dfplayer project can look like this :
+(from https://www.dfrobot.com/blog-1462.html )
+
 ![alt text](https://image.dfrobot.com/image//Blog/1462/image0.png)
 
 
