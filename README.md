@@ -18,3 +18,8 @@ Use the funtion PlayFolder(folder number, file number) to play a sound from a fo
 - Play Advertisement : If you want a sound to play like and advertisement, interrumping another sounds or songs, and playing over them, you must place it inside the folder 'advert',
 in the root directory. That one can be called using PlayAdvertidement(song number) function.
 The thing is, using the function means it can be called WHILE a sound is already being played, you cant call it if no sound is playing.
+
+A basic dfplayer project can look like this :
+![alt text](https://image.dfrobot.com/image//Blog/1462/image0.png)
+
+
