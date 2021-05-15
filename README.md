@@ -10,7 +10,7 @@ Main features
 DFPlayer Things to be aware of:
 
 - It is important to have a DFPlayer DFRobots brand, the chinese copies dont usually work as they should.
-  For $5.90 you can purchase one. ![alt text](https://www.dfrobot.com/product-1121.html)
+  For $5.90 you can purchase one. ![href](https://www.dfrobot.com/product-1121.html)
 - The module operating Voltage is 3.3V/5V
 
 How to: 
