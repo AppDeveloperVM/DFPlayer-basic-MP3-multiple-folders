@@ -9,6 +9,12 @@ Main features
 
 DFPlayer Things to be aware of:
 
+- It is important to have a DFPlayer DFRobots brand, the chinese copies dont usually work as they should.
+  For $5.90 you can purchase one. ![alt text](https://www.dfrobot.com/product-1121.html)
+- The module operating Voltage is 3.3V/5V
+
+How to: 
+
 - Play song from Folder : SONGS _outside_ mp3 folder should have the name format nnn.mp3,where the n is a number. 
 In case of a number with 2 or less digits, should come with zeros to the left, like 2 being 002.mp3 or 20 being 020.mp3.
 
