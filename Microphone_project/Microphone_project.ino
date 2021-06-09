@@ -11,8 +11,8 @@
 #define FOLDER_BUTTON 6
 #define CHANGE_FOLDER 4
 
-#define ACTIVATED LOW
-#define VOLUME_LEVEL 10 // 0 - 30
+#define ACTIVATED LOW // low in case of push button
+#define VOLUME_LEVEL 15 // 0 - 30
 
 #define MP3_SOUND_ON_FOLDER 10
 
@@ -28,6 +28,10 @@ SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
 DFPlayerMini_Fast myDFPlayer;
 
 //microphone state
+boolean lastPowerState = 1; // being INPUT_PULLUP, IT IS REVERSED
+int powerState = 0;
+int OnState = 0;
+int OffState = 1;
 boolean isOn = false;
 boolean isPlaying = false;
 
@@ -64,21 +68,25 @@ void setup()
   Serial.print(num_tracks_in_folder);
   Serial.println();
   
-  myDFPlayer.volume(10);  //Set volume value. From 0 to 30
+  myDFPlayer.volume(VOLUME_LEVEL);  //Set volume value. From 0 to 30
   
 }
 
 void loop()
 {
 
-  if (digitalRead(POWER_BUTTON) == ACTIVATED)
+  powerState = digitalRead(POWER_BUTTON);
+
+  if (lastPowerState != powerState )
   {
-    if(isOn)
+    if(powerState == OnState)
     {
-      turnOff();
-    }else{
       Initiation();
+    }else{
+      turnOff();
     }
+    delay(50);
+    lastPowerState = powerState;
   }
 
   if (digitalRead(PAUSE_BUTTON) == ACTIVATED && isOn)
