@@ -137,6 +137,7 @@ void loop()
     Serial.print(": ");
     Serial.print(num_tracks_in_folder);
     Serial.println();
+    Serial.println(F("--------------------------"));
     
   }
 
@@ -147,6 +148,7 @@ void loop()
 void Initiation(){
   // play FURRRÑIUUNN microphone sound
   Serial.println(F("STARTING.."));
+  Serial.println("");
   isOn = true;
   
   myDFPlayer.playFolder(MP3_SOUNDS_FOLDER,1);  //Play the ON SOUND mp3
