@@ -1,23 +1,26 @@
 #include <DFPlayerMini_Fast.h>
+#include <ezButton.h>
 
 #include "Arduino.h"
 #include "SoftwareSerial.h"
 
 #define LED_A 3
 #define LED_B 5
-#define POWER_BUTTON 6
-#define PAUSE_BUTTON 9
-#define NEXT_BUTTON 8
-#define CHANGE_FOLDER 7
+
+ezButton POWER_BUTTON(6);
+ezButton CHANGE_FOLDER(7);
+ezButton NEXT_BUTTON(8);
+ezButton PAUSE_BUTTON(9);
+
+#define VLM_PIN A0
 
 #define BUSY_PIN 2
 
-#define ACTIVATED LOW
 #define VOLUME_LEVEL 8 // 0 - 30 ( 18 is a good level )
-
+#define MAX_VLM_LVL 18
 #define MP3_SOUNDS_FOLDER 10
 
-int fadeDuration = 800; //duration of fade in ms
+int fadeDuration = 800; //LEDS fade duration in ms
 
 int num_tracks_in_folder = 0;
 int num_folders = 2;
@@ -35,16 +38,23 @@ boolean initSound = false;
 boolean folder_changed = false;
 int current_volume = 0;
 
+int inputVolume = 0;
+int outputVolume = 0;
+int actual_volume_lvl = 0;
+
 void setup()
 {
   pinMode(LED_A, OUTPUT);
   pinMode(LED_B, OUTPUT);
-  pinMode(POWER_BUTTON, INPUT_PULLUP);
-  pinMode(PAUSE_BUTTON, INPUT_PULLUP);
-  pinMode(NEXT_BUTTON, INPUT_PULLUP);
-  pinMode(CHANGE_FOLDER, INPUT_PULLUP);
-
   pinMode(BUSY_PIN,INPUT);
+  pinMode(VLM_PIN,INPUT);
+
+  POWER_BUTTON.setDebounceTime(50);
+  CHANGE_FOLDER.setDebounceTime(20);
+  NEXT_BUTTON.setDebounceTime(50);
+  PAUSE_BUTTON.setDebounceTime(50);
+
+  actual_vlm_lvl = VOLUME_LEVEL;
   
   mySoftwareSerial.begin(9600);
   Serial.begin(115200);
@@ -85,15 +95,26 @@ void setup()
 
 void loop()
 {
+  POWER_BUTTON.loop();
+  CHANGE_FOLDER.loop();
+  NEXT_BUTTON.loop();
+  PAUSE_BUTTON.loop();
 
   if(digitalRead(BUSY_PIN) == LOW ){
     isPlaying = true;
   }else if( digitalRead(BUSY_PIN) == HIGH ) {
     isPlaying = false;
   }
-  
 
-  if (digitalRead(POWER_BUTTON) == ACTIVATED)
+  inputVolume = analogRead(VLM_PIN); //Volume lvl recived by Potentiometer
+  outputVolume = map(inputVolume, 0, 1023, 0, MAX_VLM_LVL);
+
+  if( (outputVolume != actual_volume_lvl) && (outputVolume <= MAX_VLM_LVL) ){
+     // modify actual volume output
+     VOLUME_LEVEL = outputVolume;
+  }
+
+  if(POWER_BUTTON.isPressed() && POWER_BUTTON.getStateRaw() == LOW)
   {
     if(isOn)
     {
@@ -103,7 +124,7 @@ void loop()
     }
   }
 
-  if (digitalRead(PAUSE_BUTTON) == ACTIVATED && isOn)
+  if(PAUSE_BUTTON.isPressed() && PAUSE_BUTTON.getStateRaw() == LOW)
   {
     if(isPlaying)
     {
@@ -118,16 +139,17 @@ void loop()
   }
 
 
-  if (digitalRead(NEXT_BUTTON) == ACTIVATED && isOn)
+  if(NEXT_BUTTON.isPressed() && NEXT_BUTTON.getStateRaw() == LOW )
   {
     playNextSong();
   }
 
-  if (digitalRead(CHANGE_FOLDER) == ACTIVATED && isOn)
+  if(CHANGE_FOLDER.isPressed() && CHANGE_FOLDER.getStateRaw() == LOW )
   {
     
     changeFolder();
     //'next_folder' value changed
+    updateActualFolder();
     
     Serial.println();
     Serial.print("Changing folder to: ");
@@ -221,6 +243,7 @@ void changeFolder(){
   }
 
   actual_track_n = 1;
+  
   folder_changed = true;
   
   delay(200);
