@@ -106,6 +106,7 @@ void loop()
     isPlaying = false;
   }
 
+  // POTENTIOMETER - VOLUME 
   inputVolume = analogRead(VLM_PIN); //Volume lvl recived by Potentiometer
   outputVolume = map(inputVolume, 0, 1023, 0, MAX_VLM_LVL);
 
@@ -113,6 +114,8 @@ void loop()
      // modify actual volume output
      VOLUME_LEVEL = outputVolume;
   }
+
+  //
 
   if(POWER_BUTTON.isPressed() && POWER_BUTTON.getStateRaw() == LOW)
   {
