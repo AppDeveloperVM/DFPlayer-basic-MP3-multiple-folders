@@ -17,7 +17,7 @@ ezButton PAUSE_BUTTON(9);
 #define BUSY_PIN 2
 
 #define VOLUME_LEVEL 8 // 0 - 30 ( 18 is a good level )
-#define MAX_VLM_LVL 18
+#define MAX_VLM_LVL 17
 #define MP3_SOUNDS_FOLDER 10
 
 int fadeDuration = 800; //LEDS fade duration in ms
@@ -36,11 +36,10 @@ boolean isOn = false;
 boolean isPlaying = false;
 boolean initSound = false;
 boolean folder_changed = false;
-int current_volume = 0;
 
+int current_volume = 0;
 int inputVolume = 0;
 int outputVolume = 0;
-int actual_volume_lvl = 0;
 
 void setup()
 {
@@ -54,7 +53,7 @@ void setup()
   NEXT_BUTTON.setDebounceTime(50);
   PAUSE_BUTTON.setDebounceTime(50);
 
-  actual_vlm_lvl = VOLUME_LEVEL;
+  current_volume = VOLUME_LEVEL;
   
   mySoftwareSerial.begin(9600);
   Serial.begin(115200);
@@ -110,9 +109,19 @@ void loop()
   inputVolume = analogRead(VLM_PIN); //Volume lvl recived by Potentiometer
   outputVolume = map(inputVolume, 0, 1023, 0, MAX_VLM_LVL);
 
-  if( (outputVolume != actual_volume_lvl) && (outputVolume <= MAX_VLM_LVL) ){
+  if( (outputVolume != current_volume) && (outputVolume <= MAX_VLM_LVL) ){
      // modify actual volume output
-     VOLUME_LEVEL = outputVolume;
+    current_volume = outputVolume;
+    
+    if(current_volume <= MAX_VLM_LVL){
+      myDFPlayer.volume(current_volume);
+
+      /*Serial.println();
+      Serial.print("Volume changed to: ");
+      Serial.print(current_volume);
+      */
+    }
+    
   }
 
   //
