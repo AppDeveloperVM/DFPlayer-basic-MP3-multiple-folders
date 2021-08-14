@@ -4,10 +4,15 @@
 #include "Arduino.h"
 #include "SoftwareSerial.h"
 
+#define rxPin 10
+#define txPin 11
+
 #define LED_A 3
 #define LED_B 5
 
-ezButton POWER_BUTTON(6);
+#define POWER_BUTTON 6
+
+//ezButton POWER_BUTTON(6);
 ezButton CHANGE_FOLDER(7);
 ezButton NEXT_BUTTON(8);
 ezButton PAUSE_BUTTON(9);
@@ -16,7 +21,7 @@ ezButton PAUSE_BUTTON(9);
 
 #define BUSY_PIN 2
 
-#define VOLUME_LEVEL 8 // 0 - 30 ( 18 is a good level )
+#define VOLUME_LEVEL 15 // 0 - 30 ( 18 is a good level )
 #define MAX_VLM_LVL 17
 #define MP3_SOUNDS_FOLDER 10
 
@@ -28,7 +33,7 @@ int actual_track_n = 0;
 int actual_folder = 1;
 int next_folder = 1;
 
-SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+SoftwareSerial mySoftwareSerial(rxPin, txPin); // RX, TX
 DFPlayerMini_Fast myDFPlayer;
 
 //microphone state
@@ -43,12 +48,16 @@ int outputVolume = 0;
 
 void setup()
 {
+  // define pin modes for tx, rx:
+  pinMode(rxPin, INPUT);
+  pinMode(txPin, OUTPUT);
+  
   pinMode(LED_A, OUTPUT);
   pinMode(LED_B, OUTPUT);
   pinMode(BUSY_PIN,INPUT);
   pinMode(VLM_PIN,INPUT);
 
-  POWER_BUTTON.setDebounceTime(50);
+  //POWER_BUTTON.setDebounceTime(50);
   CHANGE_FOLDER.setDebounceTime(20);
   NEXT_BUTTON.setDebounceTime(50);
   PAUSE_BUTTON.setDebounceTime(50);
@@ -68,9 +77,11 @@ void setup()
     Serial.println(F("1.Please recheck the connection!"));
     Serial.println(F("2.Please insert the SD card!"));
     Serial.println(myDFPlayer.numSdTracks()); //read mp3 state
+    
     while(true);
   }
   Serial.println(F("DFPlayer Mini online."));
+  myDFPlayer.printError();
   Serial.println();
 
   myDFPlayer.volume(VOLUME_LEVEL);  //Set volume value. From 0 to 30
@@ -94,7 +105,8 @@ void setup()
 
 void loop()
 {
-  POWER_BUTTON.loop();
+  
+  //POWER_BUTTON.loop();
   CHANGE_FOLDER.loop();
   NEXT_BUTTON.loop();
   PAUSE_BUTTON.loop();
@@ -106,6 +118,7 @@ void loop()
   }
 
   // POTENTIOMETER - VOLUME 
+  /*
   inputVolume = analogRead(VLM_PIN); //Volume lvl recived by Potentiometer
   outputVolume = map(inputVolume, 0, 1023, 0, MAX_VLM_LVL);
 
@@ -116,17 +129,18 @@ void loop()
     if(current_volume <= MAX_VLM_LVL){
       myDFPlayer.volume(current_volume);
 
-      /*Serial.println();
+      Serial.println();
       Serial.print("Volume changed to: ");
       Serial.print(current_volume);
-      */
+      
     }
     
   }
+  */
 
   //
 
-  if(POWER_BUTTON.isPressed() && POWER_BUTTON.getStateRaw() == LOW)
+  if (digitalRead(POWER_BUTTON) == LOW) //inversed switch button
   {
     if(isOn)
     {
@@ -313,4 +327,7 @@ void turnOff(){
   //isPlaying = false;
   fadeLed(digitalRead(LED_A));
 }
+
+
+
  
