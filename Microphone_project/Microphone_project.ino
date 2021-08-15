@@ -18,6 +18,7 @@ ezButton NEXT_BUTTON(8);
 ezButton PAUSE_BUTTON(9);
 
 #define VLM_PIN A0
+#define SAMPLES 10 //average of 4 values to stabilize reading
 
 #define BUSY_PIN 2
 
@@ -37,6 +38,11 @@ SoftwareSerial mySoftwareSerial(rxPin, txPin); // RX, TX
 DFPlayerMini_Fast myDFPlayer;
 
 //microphone state
+boolean lastPowerState = 1; // being INPUT_PULLUP, IT IS REVERSED
+int powerState = 0;
+int OnState = 0;
+int OffState = 1;
+
 boolean isOn = false;
 boolean isPlaying = false;
 boolean initSound = false;
@@ -55,7 +61,7 @@ void setup()
   pinMode(LED_A, OUTPUT);
   pinMode(LED_B, OUTPUT);
   pinMode(BUSY_PIN,INPUT);
-  pinMode(VLM_PIN,INPUT);
+  pinMode(VLM_PIN,INPUT_PULLUP);
 
   //POWER_BUTTON.setDebounceTime(50);
   CHANGE_FOLDER.setDebounceTime(20);
@@ -118,8 +124,13 @@ void loop()
   }
 
   // POTENTIOMETER - VOLUME 
-  /*
-  inputVolume = analogRead(VLM_PIN); //Volume lvl recived by Potentiometer
+  
+  for (int i=0; i< SAMPLES ; i++){
+    inputVolume += analogRead(VLM_PIN);  //Volume lvl recived by Potentiometer
+  }
+  
+  inputVolume /= SAMPLES ;
+  
   outputVolume = map(inputVolume, 0, 1023, 0, MAX_VLM_LVL);
 
   if( (outputVolume != current_volume) && (outputVolume <= MAX_VLM_LVL) ){
@@ -136,19 +147,27 @@ void loop()
     }
     
   }
-  */
+  
+  
 
   //
 
-  if (digitalRead(POWER_BUTTON) == LOW) //inversed switch button
+  /*powerState = digitalRead(POWER_BUTTON);
+
+  if (lastPowerState != powerState )
   {
-    if(isOn)
+    
+    if(powerState == OnState)
     {
-      turnOff();
-    }else{
+      
       Initiation();
+    }else{
+      turnOff();
     }
+    delay(50);
+    lastPowerState = powerState;
   }
+  */
 
   if(PAUSE_BUTTON.isPressed() && PAUSE_BUTTON.getStateRaw() == LOW)
   {
