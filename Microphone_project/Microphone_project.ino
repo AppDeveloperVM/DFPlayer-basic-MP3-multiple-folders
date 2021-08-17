@@ -18,11 +18,11 @@ ezButton NEXT_BUTTON(8);
 ezButton PAUSE_BUTTON(9);
 
 #define VLM_PIN A0
-#define SAMPLES 10 //average of 4 values to stabilize reading
+#define SAMPLES 10 //average of x values to stabilize reading
 
 #define BUSY_PIN 2
 
-#define VOLUME_LEVEL 15 // 0 - 30 ( 18 is a good level )
+#define VOLUME_LEVEL 16 // 0 - 30 ( 18 is a good level )
 #define MAX_VLM_LVL 17
 #define MP3_SOUNDS_FOLDER 10
 
@@ -38,15 +38,16 @@ SoftwareSerial mySoftwareSerial(rxPin, txPin); // RX, TX
 DFPlayerMini_Fast myDFPlayer;
 
 //microphone state
-boolean lastPowerState = 1; // being INPUT_PULLUP, IT IS REVERSED
-int powerState = 0;
-int OnState = 0;
-int OffState = 1;
+boolean lastPowerState = HIGH; // being INPUT_PULLUP, IT IS REVERSED
+int powerState = HIGH;
+int OnState = LOW;
+int OffState = HIGH;
 
 boolean isOn = false;
 boolean isPlaying = false;
 boolean initSound = false;
 boolean folder_changed = false;
+boolean has_media = true;
 
 int current_volume = 0;
 int inputVolume = 0;
@@ -62,6 +63,7 @@ void setup()
   pinMode(LED_B, OUTPUT);
   pinMode(BUSY_PIN,INPUT);
   pinMode(VLM_PIN,INPUT_PULLUP);
+  pinMode(POWER_BUTTON,INPUT_PULLUP);
 
   //POWER_BUTTON.setDebounceTime(50);
   CHANGE_FOLDER.setDebounceTime(20);
@@ -75,37 +77,37 @@ void setup()
 
   //Starting
   Serial.println();
-  Serial.println(F("DFRobot DFPlayer Mini Demo"));
+  Serial.println(F("DFRobot DFPlayer Mini"));
   Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
   
-  if ( !myDFPlayer.begin(mySoftwareSerial) ) {  //Use softwareSerial to communicate with mp3.
-    Serial.println(F("Unable to begin:"));
-    Serial.println(F("1.Please recheck the connection!"));
-    Serial.println(F("2.Please insert the SD card!"));
-    Serial.println(myDFPlayer.numSdTracks()); //read mp3 state
-    
-    while(true);
-  }
+  
   Serial.println(F("DFPlayer Mini online."));
-  myDFPlayer.printError();
-  Serial.println();
+  // check errors+
+  if( checkForErrors() != 1 ){
+    Serial.println("[ No errors ]");
 
-  myDFPlayer.volume(VOLUME_LEVEL);  //Set volume value. From 0 to 30
-  delay(200);
-
-  Serial.print("Current Volume : ");
-  Serial.print( myDFPlayer.currentVolume() );
-  Serial.println();
-  Serial.print("Total Num tracks: ");
-  Serial.print(myDFPlayer.numSdTracks());
-  Serial.println();
-
-  num_tracks_in_folder = myDFPlayer.numTracksInFolder(actual_folder);
-
-  Serial.print("Current track : ");
-  Serial.print(myDFPlayer.currentSdTrack());
-  Serial.println();
-  // num_folders = myDFPlayer.numFolders() //contar 1 menos debido a la carpeta de SOUNDS
+    Serial.println();
+    myDFPlayer.volume(VOLUME_LEVEL);  //Set volume value. From 0 to 30
+    delay(200);
+  
+    Serial.print("Current Volume : ");
+    Serial.print( myDFPlayer.currentVolume() );
+    Serial.println();
+    Serial.print("Total Num tracks: ");
+    Serial.print(myDFPlayer.numSdTracks());
+    Serial.println();
+  
+    num_tracks_in_folder = myDFPlayer.numTracksInFolder(actual_folder);
+  
+    Serial.print("Current track : ");
+    Serial.print(myDFPlayer.currentSdTrack());
+    Serial.println();
+    // num_folders = myDFPlayer.numFolders() //contar 1 menos debido a la carpeta de SOUNDS
+  }else{
+    Serial.println("[ Some errors to fix ]");
+  }
+  
+  
   
 }
 
@@ -124,50 +126,51 @@ void loop()
   }
 
   // POTENTIOMETER - VOLUME 
-  
-  for (int i=0; i< SAMPLES ; i++){
-    inputVolume += analogRead(VLM_PIN);  //Volume lvl recived by Potentiometer
-  }
-  
-  inputVolume /= SAMPLES ;
-  
-  outputVolume = map(inputVolume, 0, 1023, 0, MAX_VLM_LVL);
-
-  if( (outputVolume != current_volume) && (outputVolume <= MAX_VLM_LVL) ){
-     // modify actual volume output
-    current_volume = outputVolume;
+  if(isOn){
     
-    if(current_volume <= MAX_VLM_LVL){
-      myDFPlayer.volume(current_volume);
-
-      Serial.println();
-      Serial.print("Volume changed to: ");
-      Serial.print(current_volume);
-      
+  
+    for (int i=0; i< SAMPLES ; i++){
+      inputVolume += analogRead(VLM_PIN);  //Volume lvl recived by Potentiometer
     }
     
+    inputVolume /= SAMPLES ;
+    
+    outputVolume = map(inputVolume, 0, 1023, 0, MAX_VLM_LVL);
+  
+    if( (outputVolume != current_volume) && (outputVolume <= MAX_VLM_LVL) ){
+       // modify actual volume output
+      current_volume = outputVolume;
+      
+      if(current_volume <= MAX_VLM_LVL){
+        myDFPlayer.volume(current_volume);
+  
+        Serial.println();
+        Serial.print("Volume changed to: ");
+        Serial.print(current_volume);
+        Serial.println();
+      }
+      
+    }
+
   }
   
   
 
-  //
-
-  /*powerState = digitalRead(POWER_BUTTON);
-
-  if (lastPowerState != powerState )
-  {
+  // POWER BUTTON
+  powerState = digitalRead(POWER_BUTTON);
+  if(powerState != lastPowerState){
     
-    if(powerState == OnState)
+    if (powerState == OnState)
     {
-      
       Initiation();
-    }else{
+    }
+    else if(powerState == OffState)
+    {
       turnOff();
     }
-    delay(50);
     lastPowerState = powerState;
   }
-  */
+  
 
   if(PAUSE_BUTTON.isPressed() && PAUSE_BUTTON.getStateRaw() == LOW)
   {
@@ -216,6 +219,7 @@ void loop()
 
 void Initiation(){
   // play FURRRÑIUUNN microphone sound
+  Serial.println();
   Serial.println(F("STARTING.."));
   isOn = true;
   
@@ -336,6 +340,29 @@ void resume()
   
   
   delay(500);
+}
+
+int checkForErrors() {
+  int has_errors = 0;
+  
+   if ( !myDFPlayer.begin(mySoftwareSerial) ) {  //Use softwareSerial to communicate with mp3.
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    Serial.println(myDFPlayer.numSdTracks()); //read mp3 state
+
+    has_errors = 1;
+    
+    while(true);
+  }
+
+  if( myDFPlayer.numSdTracks() == -1){
+    has_errors = 1;
+    has_media = false;
+    Serial.println("- SD card not found");
+  }
+
+  return has_errors;
 }
 
 void turnOff(){
